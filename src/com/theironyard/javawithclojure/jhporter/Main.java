@@ -46,10 +46,11 @@ public class Main
 
     public static void updateUser(Connection conn, User user) throws SQLException
     {
-        PreparedStatement stmt = conn.prepareStatement("UPDATE users SET username = ?, address = ?, email = ?");
+        PreparedStatement stmt = conn.prepareStatement("UPDATE users SET username = ?, address = ?, email = ? WHERE id = ?");
         stmt.setString(1,user.username);
         stmt.setString(2,user.address);
         stmt.setString(3,user.email);
+        stmt.setInt(4,user.id);
         stmt.execute();
     }
 
@@ -72,7 +73,7 @@ public class Main
 
 
         Spark.get(
-                "/get-messages",
+                "/user",
                 (request, response) -> {
                     ArrayList<User> users = selectUsers(conn);
                     JsonSerializer s = new JsonSerializer();
@@ -82,7 +83,7 @@ public class Main
         );
 
         Spark.post(
-                "/add-message",
+                "/user",
                 (request, response) -> {
                     String body = request.body();
                     JsonParser p = new JsonParser();
@@ -92,25 +93,23 @@ public class Main
                 }
         );
         Spark.put(
-                "/edit-message",
+                "/user",
                 (request, response) ->
                 {
                     String body = request.body();
                     JsonParser p = new JsonParser();
                     User user = p.parse(body,User.class);
-                    insertUser(conn,user);
+                    updateUser(conn,user);
                     return"";
                 }
         );
 
         Spark.delete(
-                "/delete-message",
+                "/user/:id",
                 (request, response) ->
                 {
-                    String body = request.body();
-                    JsonParser p = new JsonParser();
-                    User user = p.parse(body,User.class);
-                    deleteUser(conn,user.id);
+                    int userId = Integer.valueOf(request.params(":id"));
+                    deleteUser(conn,userId);
                     return"";
                 }
         );
